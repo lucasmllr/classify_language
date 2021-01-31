@@ -1,0 +1,21 @@
+model:
+  input_len: 256
+  conv_features: 64
+  fc_in_features: 576
+  fc_features: 512
+  vocab : ' abcdefghijklmnopqrstuvwxyz'
+data:
+  path: ../data/prepped.csv
+  val_split: 0.2
+  label_column: language
+  text_column: Text
+  n_classes: 10
+training:
+  batch_size: 32
+  n_workers: 0
+  lr: .0001
+  n_epochs: 10
+saving:
+  name: char_cnn_000
+  root: ../results/
+  period: 1
