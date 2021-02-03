@@ -33,13 +33,12 @@ def test_data(data):
     print('looking good')
 
 
-class SimpleTextDataset(Dataset):
+class CharTextDataset(Dataset):
 
     def __init__(self, data, vocab, labels, input_dim=None):
         self.vocab = vocab
         if input_dim is not None:
             self.input_dim = input_dim
-        self.input_dim = input_dim
         self.data = data
         self.labels = labels
 
@@ -47,7 +46,7 @@ class SimpleTextDataset(Dataset):
         return len(self.data.index)
 
     def tokenize(self, text):
-        tokens = torch.tensor([self.vocab.index(char) for char in text]).long()
+        tokens = torch.tensor([self.vocab[char] for char in text]).long()
         return one_hot(tokens, len(self.vocab))
 
     def __getitem__(self, idx):
@@ -65,6 +64,45 @@ class SimpleTextDataset(Dataset):
         label = torch.tensor(self.labels.index(label))
         return text.float(), label.long()
         
+
+class WordTextDataset(Dataset):
+    # TODO: there should be an abstract text dataset class
+    def __init__(self, data, vocab, labels, input_dim):
+        """
+        Args:
+            data (DataFrame): with text and label column
+            vocab (dict): with word, index pairs, word indices should be alphabetically ordered
+            labels (list): list of labels
+            input_dim (int): length of input sequences
+        """
+        self.vocab = vocab
+        self.data = data
+        self.labels = labels
+        self.input_dim = input_dim
+        
+    def __len__(self):
+        return len(self.data.index)
+
+    def tokenize(self, text):
+        text = text.split(' ')
+        tokens = [torch.tensor(self.vocab[w]).long() for w in text]
+        return torch.stack(tokens)
+
+    def __getitem__(self, idx):
+        # TODO: add augmenting start position
+        text = self.data.iloc[idx].text
+        text = self.tokenize(text)
+        diff = len(text) - self.input_dim
+        if diff >= 0:
+            text = text[:self.input_dim]
+        else:
+            padding = torch.full((-diff,), len(self.vocab))
+            text = torch.cat([text, padding])
+        label = self.data.iloc[idx].label
+        label = torch.tensor(self.labels.index(label)).long()
+        return text, label
+
+
 
 if __name__ == '__main__':
 

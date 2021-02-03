@@ -7,11 +7,13 @@ from os.path import join
 
 class LanguageClassifier(pl.LightningModule):
 
-    def __init__(self, params, model, labels):
+    def __init__(self, params, model, labels, vocab):
         super(LanguageClassifier, self).__init__()
         self.params = params
         self.model = model
         self.labels = labels
+        self.vocab = vocab
+        self.words = sorted(list(self.vocab.keys())) + ['.']
 
     def forward(self, inpt):
         return self.model(inpt)
@@ -43,11 +45,17 @@ class LanguageClassifier(pl.LightningModule):
         return Adam(self.model.parameters(), lr=self.params.training.lr)
 
     def _save_intermediate_results(self, inpt, pred_labels, target, mode):
-        inpt = torch.argmax(inpt, dim=1).long()
-        with open(join(self.params.saving.root, f'{mode}_result_{self.current_epoch}.csv'), 'w+') as f:
+        if self.params.model.vocab_type == 'char':
+            inpt = torch.argmax(inpt, dim=1).long()
+        with open(join(self.params.saving.root, self.params.saving.name, f'{mode}_result_{self.current_epoch}.csv'), 'w+') as f:
             f.write('target, prediction, input\n')
             for b in range(inpt.shape[0]):
-                line = ''.join([self.params.model.vocab[i] for i in list(inpt[b])])
+                if self.params.model.vocab_type == 'char':
+                    line = ''.join([self.words[c] for c in list(inpt[b])])
+                elif self.params.model.vocab_type == 'word':
+                    line = ' '.join([self.words[w] for w in list(inpt[b])])
+                else:
+                    raise ValueError('vocab_type needs to be "char" or "word".')
                 t = self.labels[target[b]]
                 p = self.labels[pred_labels[b]]
                 line = f'{t}, {p}, ' + line + '\n'
