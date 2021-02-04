@@ -14,7 +14,8 @@ from os.path import join
 from .utils import init_experiment_from_config
 from .models.cnn import CharCNN
 from .deep_lang_classifier import LanguageClassifier
-from .data import WordTextDataset, WordTextDataset, test_data
+from .data import CharTextDataset, WordTextDataset, test_data
+from . import evaluation as eval
 
 
 def train_with(params:DotMap):
@@ -25,18 +26,18 @@ def train_with(params:DotMap):
     data = data.rename(columns={params.data.text_column : 'text', params.data.label_column : 'label'})
     labels = sorted(list(data.label.unique()))
     # character based vocabulary
-    # vocab = {c : i for i, c in enumerate(sorted(list(' ' + string.ascii_lowercase)))}
+    vocab = {c : i for i, c in enumerate(sorted(list(' ' + string.ascii_lowercase)))}
     # word based vocabulary
-    text = ' '.join(data.text.to_list()).split()
-    vocab = {w : i for i, w in enumerate(sorted(set(text)))}
+    # text = ' '.join(data.text.to_list()).split()
+    # vocab = {w : i for i, w in enumerate(sorted(set(text)))}
     train_data, val_data = train_test_split(data, test_size=params.data.val_split)
-    train_ds = WordTextDataset(
+    train_ds = CharTextDataset(
         data=train_data,
         vocab=vocab,
         labels=labels,
         input_dim=params.model.input_len
     )
-    val_ds = WordTextDataset(
+    val_ds = CharTextDataset(
         data=val_data,
         vocab=vocab,
         labels=labels,
@@ -57,18 +58,18 @@ def train_with(params:DotMap):
 
     # model
     print('initializing model')
-    # model = CharCNN(
-    #     vocab_len=len(vocab),
-    #     conv_features=params.model.conv_features, 
-    #     fc_in_features=params.model.fc_in_features, 
-    #     fc_features=params.model.fc_features, 
-    #     n_classes=params.data.n_classes
-    # )
-    model = BOWClassifier(
+    model = CharCNN(
         vocab_len=len(vocab),
-        hidden_dim=params.model.hidden_dim,
+        conv_features=params.model.conv_features, 
+        fc_in_features=params.model.fc_in_features, 
+        fc_features=params.model.fc_features, 
         n_classes=params.data.n_classes
     )
+    # model = BOWClassifier(
+    #     vocab_len=len(vocab),
+    #     hidden_dim=params.model.hidden_dim,
+    #     n_classes=params.data.n_classes
+    # )
     langcla = LanguageClassifier(params, model, labels, vocab)
 
     # training
@@ -84,15 +85,34 @@ def train_with(params:DotMap):
     )
     trainer.fit(langcla, train_loader, val_loader)
 
+    best_ckpt_path = checkpoint_callback.best_model_path
+    langcla.load_weights(best_ckpt_path)
+    
+    return langcla, train_ds, val_ds
+
+
+def evaluate(params:DotMap, classifier:LanguageClassifier, val_ds:CharTextDataset):
+
+    df = val_ds.get_tokenized_data()
+    df = classifier.predict_df(df)
+    eval.confusion(
+        df, sorted(classifier.labels),
+        dst=join(params.saving.root, params.saving.name, 'confusion.pdf'),
+        title=params.saving.name + ' Confusion'
+    )
+    eval.failures(df, dst=join(params.saving.root, params.saving.name, 'fails.csv'), n_max=20)
+
 
 if __name__ == '__main__':
 
     # parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', '-c', default='configs/config.yml', 
+    parser.add_argument('--config', '-c', default='configs/cnn_config.yml', 
                         help='config file containing training params')
     args = parser.parse_args()
 
     params = init_experiment_from_config(args.config)
 
-    train_with(params)
+    langcla, _, val_ds = train_with(params)
+
+    evaluate(params, langcla, val_ds)

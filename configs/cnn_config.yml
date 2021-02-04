@@ -1,0 +1,23 @@
+model:
+  input_len: 256
+  conv_features: 64
+  fc_in_features: 576
+  fc_features: 512
+  # hidden_dim: 16
+  vocab_type: char
+data:
+  path: ../data/prepped.csv
+  val_split: 0.2
+  label_column: language
+  text_column: Text
+  n_classes: 10
+training:
+  batch_size: 32
+  n_workers: 0
+  lr: .0001
+  n_epochs: 1
+  gpus: 
+saving:
+  name: cnn_test_000
+  root: ../results/
+  period: 1

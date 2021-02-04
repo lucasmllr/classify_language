@@ -60,3 +60,16 @@ class LanguageClassifier(pl.LightningModule):
                 p = self.labels[pred_labels[b]]
                 line = f'{t}, {p}, ' + line + '\n'
                 f.write(line)
+
+    def predict_df(self, df):
+        data = df.copy()
+        data.tokens = data.tokens.map(lambda x: x.unsqueeze(0))
+        data['pred'] = data.tokens.map(self.forward)
+        data.pred = data.pred.map(lambda x: torch.argmax(x.squeeze()))
+        data.pred = data.pred.map(lambda x: self.labels[x])
+        return data
+
+    def load_weights(self, ckpt_path):
+        ckpt = torch.load(ckpt_path, map_location=self.device)
+        state_dict = ckpt['state_dict']
+        self.load_state_dict(state_dict)

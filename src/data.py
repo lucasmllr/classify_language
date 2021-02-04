@@ -35,10 +35,9 @@ def test_data(data):
 
 class CharTextDataset(Dataset):
 
-    def __init__(self, data, vocab, labels, input_dim=None):
+    def __init__(self, data, vocab, labels, input_dim):
         self.vocab = vocab
-        if input_dim is not None:
-            self.input_dim = input_dim
+        self.input_dim = input_dim
         self.data = data
         self.labels = labels
 
@@ -47,23 +46,27 @@ class CharTextDataset(Dataset):
 
     def tokenize(self, text):
         tokens = torch.tensor([self.vocab[char] for char in text]).long()
-        return one_hot(tokens, len(self.vocab))
+        tokens = one_hot(tokens, len(self.vocab))
+        diff = len(tokens) - self.input_dim
+        if diff >= 0:
+            tokens = tokens[:self.input_dim]
+        else:
+            tokens = pad(tokens, [0, 0, 0, -diff])
+        return tokens.transpose(0, 1).float()
 
     def __getitem__(self, idx):
         # TODO: add augmenting start position
         text = self.data.iloc[idx].text
         text = self.tokenize(text)
-        if hasattr(self, 'input_dim'):
-            diff = len(text) - self.input_dim
-            if diff >= 0:
-                text = text[:self.input_dim]
-            else:
-                text = pad(text, [0, 0, 0, -diff])
-        text = text.transpose(0, 1)
         label = self.data.iloc[idx].label
         label = torch.tensor(self.labels.index(label))
-        return text.float(), label.long()
+        return text, label.long()
         
+    def get_tokenized_data(self):
+        data = self.data.copy()
+        data['tokens'] = data.text.map(self.tokenize)
+        return data
+
 
 class WordTextDataset(Dataset):
     # TODO: there should be an abstract text dataset class
@@ -86,21 +89,27 @@ class WordTextDataset(Dataset):
     def tokenize(self, text):
         text = text.split(' ')
         tokens = [torch.tensor(self.vocab[w]).long() for w in text]
-        return torch.stack(tokens)
+        tokens = torch.stack(tokens)
+        diff = len(tokens) - self.input_dim
+        if diff >= 0:
+            tokens = tokens[:self.input_dim]
+        else:
+            padding = torch.full((-diff,), len(self.vocab))
+            tokens = torch.cat([tokens, padding])
+        return tokens
 
     def __getitem__(self, idx):
         # TODO: add augmenting start position
         text = self.data.iloc[idx].text
         text = self.tokenize(text)
-        diff = len(text) - self.input_dim
-        if diff >= 0:
-            text = text[:self.input_dim]
-        else:
-            padding = torch.full((-diff,), len(self.vocab))
-            text = torch.cat([text, padding])
         label = self.data.iloc[idx].label
         label = torch.tensor(self.labels.index(label)).long()
         return text, label
+
+    def get_tokenized_data(self):
+        data = self.data.copy()
+        data['tokens'] = data.text.map(self.tokenize)
+        return data
 
 
 
