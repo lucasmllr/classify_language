@@ -13,6 +13,7 @@ from os.path import join
 
 from .utils import init_experiment_from_config
 from .models.cnn import CharCNN
+from .models.lstm import LSTM
 from .deep_lang_classifier import LanguageClassifier
 from .data import CharTextDataset, WordTextDataset, test_data
 from . import evaluation as eval
@@ -58,11 +59,16 @@ def train_with(params:DotMap):
 
     # model
     print('initializing model')
-    model = CharCNN(
-        vocab_len=len(vocab),
-        conv_features=params.model.conv_features, 
-        fc_in_features=params.model.fc_in_features, 
-        fc_features=params.model.fc_features, 
+    # model = CharCNN(
+    #     vocab_len=len(vocab),
+    #     conv_features=params.model.conv_features, 
+    #     fc_in_features=params.model.fc_in_features, 
+    #     fc_features=params.model.fc_features, 
+    #     n_classes=params.data.n_classes
+    # )
+    model = LSTM(
+        in_dim=len(vocab),
+        hidden_dim=params.model.hidden_dim,
         n_classes=params.data.n_classes
     )
     # model = BOWClassifier(
@@ -107,7 +113,7 @@ if __name__ == '__main__':
 
     # parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', '-c', default='configs/cnn_config.yml', 
+    parser.add_argument('--config', '-c', default='configs/lstm_config.yml', 
                         help='config file containing training params')
     args = parser.parse_args()
 

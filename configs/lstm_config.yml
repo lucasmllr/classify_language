@@ -1,0 +1,21 @@
+model:
+  input_len: 128
+  hidden_dim: 16
+  n_layers: 1
+  vocab_type: char
+data:
+  path: ../data/prepped.csv
+  val_split: 0.2
+  label_column: language
+  text_column: Text
+  n_classes: 10
+training:
+  batch_size: 32
+  n_workers: 0
+  lr: .0001
+  n_epochs: 10
+  gpus: 
+saving:
+  name: lstm_002
+  root: ../results/
+  period: 1
