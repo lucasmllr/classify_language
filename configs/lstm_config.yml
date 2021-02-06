@@ -2,6 +2,7 @@ model:
   input_len: 128
   hidden_dim: 16
   n_layers: 1
+  p_drop: .4
   vocab_type: char
 data:
   path: ../data/prepped.csv
@@ -13,9 +14,9 @@ training:
   batch_size: 32
   n_workers: 0
   lr: .0001
-  n_epochs: 10
+  n_epochs: 1
   gpus: 
 saving:
-  name: lstm_002
+  name: test_lstm_000
   root: ../results/
   period: 1

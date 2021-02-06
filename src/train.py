@@ -25,13 +25,15 @@ def train_with(params:DotMap):
     data = read_csv(params.data.path)
     test_data(data)
     data = data.rename(columns={params.data.text_column : 'text', params.data.label_column : 'label'})
+    train_data, val_data = train_test_split(data, test_size=params.data.val_split)
     labels = sorted(list(data.label.unique()))
+
     # character based vocabulary
     vocab = {c : i for i, c in enumerate(sorted(list(' ' + string.ascii_lowercase)))}
     # word based vocabulary
     # text = ' '.join(data.text.to_list()).split()
     # vocab = {w : i for i, w in enumerate(sorted(set(text)))}
-    train_data, val_data = train_test_split(data, test_size=params.data.val_split)
+    
     train_ds = CharTextDataset(
         data=train_data,
         vocab=vocab,
@@ -44,8 +46,20 @@ def train_with(params:DotMap):
         labels=labels,
         input_dim=params.model.input_len
     )
+    #  train_ds = WordTextDataset(
+    #     data=train_data,
+    #     vocab=vocab,
+    #     labels=labels,
+    #     input_dim=params.model.input_len
+    # )
+    # val_ds = WordTextDataset(
+    #     data=val_data,
+    #     vocab=vocab,
+    #     labels=labels,
+    #     input_dim=params.model.input_len
+    # )
     train_loader = DataLoader(
-        train_ds, 
+        train_ds,
         shuffle=True, 
         batch_size=params.training.batch_size, 
         num_workers=params.training.n_workers
@@ -69,7 +83,8 @@ def train_with(params:DotMap):
     model = LSTM(
         in_dim=len(vocab),
         hidden_dim=params.model.hidden_dim,
-        n_classes=params.data.n_classes
+        n_classes=params.data.n_classes,
+        p_drop=params.model.p_drop
     )
     # model = BOWClassifier(
     #     vocab_len=len(vocab),
@@ -99,8 +114,12 @@ def train_with(params:DotMap):
 
 def evaluate(params:DotMap, classifier:LanguageClassifier, val_ds:CharTextDataset):
 
+    print('preparing evaluation data')
     df = val_ds.get_tokenized_data()
+    print('running inference on eval data')
     df = classifier.predict_df(df)
+
+    print('saving results')
     eval.confusion(
         df, sorted(classifier.labels),
         dst=join(params.saving.root, params.saving.name, 'confusion.pdf'),

@@ -62,6 +62,7 @@ class LanguageClassifier(pl.LightningModule):
                 f.write(line)
 
     def predict_df(self, df):
+        self.eval()
         data = df.copy()
         data.tokens = data.tokens.map(lambda x: x.unsqueeze(0))
         data['pred'] = data.tokens.map(self.forward)

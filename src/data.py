@@ -70,6 +70,7 @@ class CharTextDataset(Dataset):
 
 class WordTextDataset(Dataset):
     # TODO: there should be an abstract text dataset class
+    # TODO: only fixed length outputs so far
     def __init__(self, data, vocab, labels, input_dim):
         """
         Args:
