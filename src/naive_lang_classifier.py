@@ -35,11 +35,57 @@ class NaiveLanguageClassifier:
 
     def predict(self, text):
         hist = self.predict_hist(text)
-        if np.sum(hist) < 0.9:  # arbitrary threshold < 1
-            return np.nan
+        if np.sum(hist) < 0.9:  # no known word
+            return 'Dunno'
         pred = np.argmax(hist, axis=0)
         return sorted(self.labels.keys())[pred]
 
     def predict_df(self, df):
         df['pred'] = df.text.map(self.predict)
         return df
+
+
+if __name__ == '__main__':
+
+    from sklearn.model_selection import train_test_split
+    import argparse
+    from pandas import read_csv
+    from os.path import join
+
+    from .data import test_data
+    from .utils import init_experiment_from_config
+    from . import evaluation as eval
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', '-c', default='configs/naive_config.yml', 
+                        help='config file containing training params')
+    args = parser.parse_args()
+
+    params = init_experiment_from_config(args.config)
+
+    print('loading data')
+    data = read_csv(params.data.path)
+    test_data(data)
+    data = data.rename(columns={params.data.text_column : 'text', params.data.label_column : 'label'})
+    train_data, val_data = train_test_split(data, test_size=params.data.val_split)
+    # train_data = train_data[:100]
+    labels = sorted(list(data.label.unique()))
+
+    print('fitting naive classifier')
+    langcla = NaiveLanguageClassifier()
+    langcla.fit(train_data)
+
+    print('evaluating')
+    pred_df = langcla.predict_df(val_data)
+    print('saving results')
+    eval.confusion(
+        pred_df, labels, 
+        dst=join(params.saving.root, params.saving.name, 'confusion.pdf'),
+        title=params.saving.name + ' Confusion'
+    )
+
+    eval.failures(
+        pred_df, 
+        dst=join(params.saving.root, params.saving.name, 'fails.csv'),
+        n_max=20
+    )

@@ -44,8 +44,13 @@ The architecture is motivated by (https://arxiv.org/pdf/1509.01626.pdf).
 
 ### LSTM
 
-A single LSTM layer receives as input one-hot-vectors of character sequences.
-A fully connected layer then produces an estimate from either the mean of all hidden states or the last hidden state only.
+Two stacked LSTM layer receives as input one-hot-vectors of character sequences.
+Two connected layers then produce an estimate from either the mean of all hidden states or the last hidden state only.
+
+### Attention
+
+This architecture is inspired by the Transformer (https://arxiv.org/abs/1706.03762).
+It consists of a multi-head attention layer followed by two fully conntected layers. However, rather than producing a sequential output with the same length as the input, the fully connected layers pool the input to compute a classification output.
 
 ### BOW
 

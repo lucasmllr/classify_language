@@ -1,0 +1,9 @@
+data:
+  path: ../data/prepped.csv
+  val_split: 0.2
+  label_column: language
+  text_column: Text
+  n_classes: 10
+saving:
+  name: naive_000
+  root: ../results/
