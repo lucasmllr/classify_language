@@ -1,4 +1,3 @@
-
 import argparse
 from src.models.bow import BOWClassifier
 import string
@@ -14,6 +13,7 @@ from os.path import join
 from .utils import init_experiment_from_config
 from .models.cnn import CharCNN
 from .models.lstm import LSTM
+from .models.att import Attention
 from .deep_lang_classifier import LanguageClassifier
 from .data import CharTextDataset, WordTextDataset, test_data
 from . import evaluation as eval
@@ -80,17 +80,24 @@ def train_with(params:DotMap):
     #     fc_features=params.model.fc_features, 
     #     n_classes=params.data.n_classes
     # )
-    model = LSTM(
-        in_dim=len(vocab),
-        hidden_dim=params.model.hidden_dim,
-        n_classes=params.data.n_classes,
-        p_drop=params.model.p_drop
-    )
+    # model = LSTM(
+    #     in_dim=len(vocab),
+    #     hidden_dim=params.model.hidden_dim,
+    #     n_classes=params.data.n_classes,
+    #     p_drop=params.model.p_drop
+    # )
     # model = BOWClassifier(
     #     vocab_len=len(vocab),
     #     hidden_dim=params.model.hidden_dim,
     #     n_classes=params.data.n_classes
     # )
+    model = Attention(
+        seq_len=params.model.input_len,
+        embed_dim=len(vocab),
+        n_heads=params.model.n_heads,
+        hidden_dim=params.model.hidden_dim,
+        n_classes=params.data.n_classes
+    )
     langcla = LanguageClassifier(params, model, labels, vocab)
 
     # training
@@ -132,7 +139,7 @@ if __name__ == '__main__':
 
     # parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', '-c', default='configs/lstm_config.yml', 
+    parser.add_argument('--config', '-c', default='configs/att_config.yml', 
                         help='config file containing training params')
     args = parser.parse_args()
 

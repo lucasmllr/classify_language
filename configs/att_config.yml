@@ -1,0 +1,21 @@
+model:
+  input_len: 256
+  n_heads: 9
+  hidden_dim: 32
+  vocab_type: char
+data:
+  path: ../data/prepped.csv
+  val_split: 0.2
+  label_column: language
+  text_column: Text
+  n_classes: 10
+training:
+  batch_size: 32
+  n_workers: 0
+  lr: .0001
+  n_epochs: 3
+  gpus: 
+saving:
+  name: att_test_000
+  root: ../results/
+  period: 1
