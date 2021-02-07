@@ -61,8 +61,25 @@ But of course embeddings for words not contained in the training set are never o
 
 ## Results
 
+The following table shows the mean accuracies of all models:
+
+| Model     | CNN       | LSTM      | Naive     | Attention | BOW       |
+| ----:     | :---:     | :---:     | :---:     | :---:     | :---:     |
+| **Acc**   | 88 ± 5    | 95 ± 4    | 98 ± 2    | 75 ± 12   | 97 ± 3    | 
+
+All values are in percent, errors are standard deviations over the ten languages.
+Despite its simplicity the naive approach is the best performing followed by the bag-of-words model. Among the character based models the LSTM performs best.
+Full confusion matrices are included in `results/`. It also includes failure cases for all models.
+
 ## Discussion
-removing punctiation makes is difficult to identify citations.
-BOW not robust against out-of-vocab isssues whereas naive and char based models are.
+
+All character level approaches are intrinsically robust against words not included in the training data. So is the naive approach because it simply skips unknown words. However, it runs into trouble if no word in a given text is know. The bag-of words model is not robust against out-of-vocabulary issues. But a simple pre-processing step could bypass this.
+
+Some failure cases seem to be due to quotations which are difficult to recognize when punctuation is removed. 
+
+Arguably, unordered word level approaches seem to outperform sequential character level ones. Technically, the sequential models could be combined with an embedding layer to operate on a word level. But given the good performance of the unstructured word level models this does not seem to be necessary.
+
+The naive approach works remarkably well even with few training examples and fitting it is much faster than training the deep learning based models.
 
 ## Usage and Implementation
+
