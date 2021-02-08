@@ -2,7 +2,7 @@
 
 This project implements different models to classify the language a text is written in.
 The training data contains 1000 lines for each of 10 languages.
-Models contain a naive approach computing probabilities based on word counts in the training data and several machine / deep learning approaches. Among them is a character level CNN and LSTM and bag-of-words model.
+Models contain a naive approach computing probabilities based on word counts in the training data and several machine / deep learning approaches. Among them is a character level CNN and LSTM and a bag-of-words model.
 
 ## Data
 
@@ -29,7 +29,7 @@ For all trainings a train/validation split of 80/20 is used.
 
 The language of a text may most easily be predicted by creating a dictionary of words and their language. Upon inference a simple vote of words should then provide a good estimate. This is done in the naive classifier.
 For any machine learning model it appears reasonable to begin with a character level approach due to the large vocabulary of multiple languages and the much smaller number of latin characters.
-Language specific patterns in character sequences should be easily identifiable. It should be a much simpler task than e.g. sentiment classification. Thus, there is a character level CNN and an LSTM.
+Language specific patterns in character sequences should be easily identifiable. It should be a much simpler task than e.g. sentiment classification. There is a character level CNN, an LSTM and an attention based model.
 On the other hand when trained specifically for language classification word embeddings may be very easily separable. A linear classifier could be enough. This is tried in the BOW model. 
 
 ### Naive Classifier
@@ -71,6 +71,8 @@ All values are in percent, errors are standard deviations over the ten languages
 Despite its simplicity the naive approach is the best performing followed by the bag-of-words model. Among the character based models the LSTM performs best.
 Full confusion matrices are included in `results/`. It also includes failure cases for all models.
 
+For the deep learning based approaches `results/` includes plots of accuracy vs. epoch for both training and validation data. It reveils that the BOW-model is the slowest to learn in the beginning but ultimately exceeds the character based sequential models. The Attention based model strongly overfits the training data, quickly reaching a training accuracy of 100% but never exceeding 80% on the validation data. The LSTM learns faster and overfits less than the CNN.
+
 ## Discussion
 
 All character level approaches are intrinsically robust against words not included in the training data. So is the naive approach because it simply skips unknown words. However, it runs into trouble if no word in a given text is know. The bag-of words model is not robust against out-of-vocabulary issues. But a simple pre-processing step could bypass this.
@@ -79,7 +81,22 @@ Some failure cases seem to be due to quotations which are difficult to recognize
 
 Arguably, unordered word level approaches seem to outperform sequential character level ones. Technically, the sequential models could be combined with an embedding layer to operate on a word level. But given the good performance of the unstructured word level models this does not seem to be necessary.
 
+Overfitting could be further reduced by augmenting the start position and length of an input line and by randomly masking out words or characters from the input.
+
 The naive approach works remarkably well even with few training examples and fitting it is much faster than training the deep learning based models.
 
 ## Usage and Implementation
+
+The code is written in Python 3.8. All dependencies are included in `requirements.txt` and can be installed by `$ pip install -r requirements.txt`.
+
+Trainings are defined by a `config.yml` as included in `configs/`. All deep learning based models are trained by configuring and running the `train` script from the top level:
+```
+$ python -m src.train --config <config.yml>
+```
+The training procedure is defined in `deep_lang_classifier`, PyTorch models are collected in `models/`.
+
+The naive classifier is fitted by running:
+```
+$ python -m src.naive_lang_classifier --config <config.yml>
+```
 
