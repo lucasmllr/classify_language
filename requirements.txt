@@ -1,0 +1,11 @@
+dotmap
+Unidecode
+pytorch-lightning==1.1.0
+pandas
+numpy
+torch
+torchvision
+argparse
+sklearn
+PyYAML
+matplotlib
