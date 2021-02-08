@@ -3,12 +3,22 @@ from tqdm import tqdm
 
 
 class NaiveLanguageClassifier:
+    '''a simple language classifier. When fitted it generates histograms for
+    often a given word in the training data appears in every language.
+    For prediction histograms of known words in a sequence are added and 
+    normalized to produce a probability estimate over languages.
+    '''
 
     def __init__(self):
         self.words = {}
         self.labels = None
 
     def fit(self, data, max_idx=None):
+        '''loops over all text lines in data to generate word histograms.
+        Args:
+            data (DataFrame): must contain columns "text" and "label"
+            max_idx (int or None): maximum number of lines to train on, default: None
+        '''
         max_idx = max_idx or len(data.index)
         self.labels = {l : i for i, l in enumerate(sorted(data.label.unique()))}
         for i in tqdm(range(max_idx)):
@@ -22,6 +32,11 @@ class NaiveLanguageClassifier:
             self.words[k] = hist / np.sum(hist)
 
     def predict_hist(self, text):
+        '''loops over all words in text and sums histograms of known words.
+        Unknown words are skipped.
+        Args:
+            text (str): text to be classified
+        '''
         hists = []
         for w in text.split():
             if w in self.words.keys():
@@ -34,6 +49,8 @@ class NaiveLanguageClassifier:
             return hist
 
     def predict(self, text):
+        '''executes self.predict_hist and returns argmax label
+        '''
         hist = self.predict_hist(text)
         if np.sum(hist) < 0.9:  # no known word
             return 'Dunno'
@@ -41,6 +58,8 @@ class NaiveLanguageClassifier:
         return sorted(self.labels.keys())[pred]
 
     def predict_df(self, df):
+        '''applies self.predict to a text column in a DataFrame.
+        '''
         df['pred'] = df.text.map(self.predict)
         return df
 

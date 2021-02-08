@@ -20,6 +20,11 @@ from . import evaluation as eval
 
 
 def train_with(params:DotMap):
+    '''given a parameter object initialized vocabulary, datasets, model and training procedure for
+    a deep learning training.
+    Returns the model with parameters leading to the lowest validation loss.
+    This function must be modified to train different models.
+    '''
     # data
     print('loading data')
     data = read_csv(params.data.path)
@@ -119,7 +124,13 @@ def train_with(params:DotMap):
     return langcla, train_ds, val_ds
 
 
-def evaluate(params:DotMap, classifier:LanguageClassifier, val_ds:CharTextDataset):
+def evaluate(params:DotMap, classifier:LanguageClassifier, val_ds):
+    '''given a parameter object, a LanguageClassifier instance and a validation dataset
+    infers labels for the whole validation dataset and computes a confusion matrix.
+    It also extracts some failure cases.
+    This function may be modified to run any kind of evaluation after the training 
+    has completed.
+    '''
 
     print('preparing evaluation data')
     df = val_ds.get_tokenized_data()

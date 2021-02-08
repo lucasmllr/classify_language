@@ -6,8 +6,19 @@ from os.path import join
 
 
 class LanguageClassifier(pl.LightningModule):
+    '''defines the training procedure for a deep learning based language classification model.
+    It wraps a PyTorch Module and defines that takes as input a text sequence and computes 
+    a classification output. The model can have character or word based vocabulary. 
+    '''
 
     def __init__(self, params, model, labels, vocab):
+        '''
+        Args:
+            params (DotMap): parameter object
+            model (Module): pytorch classification model
+            labels (list): of labels, order must agree with dataloading
+            vocab (dict): of the form {item : index}, indices must order items alphabetically
+        '''
         super(LanguageClassifier, self).__init__()
         self.params = params
         self.model = model
